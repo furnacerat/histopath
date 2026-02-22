@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+
+# Block auth-gated app routes (Google can't access these anyway)
+Disallow: /dashboard
+Disallow: /quiz
+Disallow: /flashcards
+Disallow: /tutor
+Disallow: /slidebox
+Disallow: /simulator
+Disallow: /commuter
+
+Sitemap: https://histologypath.com/sitemap.xml
