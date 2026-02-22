@@ -1,0 +1,5 @@
+{
+  "name": "HistoPath Companion",
+  "description": "A comprehensive study suite for Histology State License preparation, featuring AI-powered tutoring, interactive flashcards, and practice exams based on ASCP and state requirements.",
+  "requestFramePermissions": ["microphone"]
+}
