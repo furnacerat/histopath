@@ -17,6 +17,7 @@ import { LabSimulatorView } from './components/LabSimulatorView';
 import { CommuterView } from './components/CommuterView';
 import { AuthView } from './components/AuthView';
 import { ProfileView } from './components/ProfileView';
+import { PaywallView } from './components/PaywallView';
 import { Topic, UserProgress, Flashcard, Question, TroubleshootingScenario } from './types';
 import { geminiService } from './services/geminiService';
 import { supabase } from './lib/supabase';
@@ -36,6 +37,8 @@ export default function App() {
   const [errorToast, setErrorToast] = useState<string | null>(null);
   const [session, setSession] = useState<any>(undefined); // undefined = loading, null = logged out
   const [displayName, setDisplayName] = useState('');
+  const [plan, setPlan] = useState<string>('free');
+  const [stripeCustomerId, setStripeCustomerId] = useState<string | null>(null);
 
   const apiKey = (import.meta as any).env?.VITE_OPENAI_API_KEY || '';
   const apiKeyMissing = !apiKey || apiKey === 'your_openai_api_key_here';
@@ -63,13 +66,21 @@ export default function App() {
 
   const loadProfile = async (userId: string) => {
     if (!supabase) return;
-    const { data } = await supabase.from('profiles').select('display_name').eq('id', userId).maybeSingle();
+    const { data } = await supabase
+      .from('profiles')
+      .select('display_name, plan, stripe_customer_id')
+      .eq('id', userId)
+      .maybeSingle();
     if (data?.display_name) setDisplayName(data.display_name);
+    if (data?.plan) setPlan(data.plan);
+    if (data?.stripe_customer_id) setStripeCustomerId(data.stripe_customer_id);
   };
 
   const handleSignOut = async () => {
     if (supabase) await supabase.auth.signOut();
     setSession(null);
+    setPlan('free');
+    setDisplayName('');
     setView('dashboard');
   };
 
@@ -223,6 +234,17 @@ export default function App() {
   // Show login screen if not authenticated (and Supabase is configured)
   if (supabase && session === null) {
     return <AuthView onAuth={() => { }} />;
+  }
+
+  // Show paywall if logged in but not a paying subscriber or admin
+  if (supabase && session && plan !== 'pro' && plan !== 'admin') {
+    return (
+      <PaywallView
+        userId={session.user.id}
+        userEmail={session.user.email || ''}
+        onSignOut={handleSignOut}
+      />
+    );
   }
 
   return (
